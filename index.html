@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>The Christmas Password Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 0 0, rgba(248, 113, 113, 0.15), transparent 55%),
+        radial-gradient(circle at 100% 100%, rgba(34, 197, 94, 0.18), transparent 60%),
+        #ffffff;
+
+    }
+    body.finished .game-container,
+    body.finished .scene,
+    body.finished .ornament-layer {
+      display: none;
+    }
+
+    .ornament-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(248, 113, 113, 0.5) 0, rgba(248, 113, 113, 0.5) 12px, transparent 13px),
+        radial-gradient(circle at 80% 10%, rgba(74, 222, 128, 0.55) 0, rgba(74, 222, 128, 0.55) 15px, transparent 16px),
+        radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.5) 0, rgba(37, 99, 235, 0.5) 10px, transparent 11px),
+        radial-gradient(circle at 75% 75%, rgba(250, 204, 21, 0.5) 0, rgba(250, 204, 21, 0.5) 13px, transparent 14px),
+        radial-gradient(circle at 40% 35%, rgba(236, 72, 153, 0.5) 0, rgba(236, 72, 153, 0.5) 10px, transparent 11px),
+        radial-gradient(circle at 50% 90%, rgba(34, 197, 94, 0.5) 0, rgba(34, 197, 94, 0.5) 14px, transparent 15px);
+      background-repeat: no-repeat;
+      background-size: 220px 220px, 250px 250px, 200px 200px, 230px 230px, 190px 190px, 240px 240px;
+    }
+
+    .scene {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .lights-row {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
+    .light-bulb {
+      width: 12px;
+      height: 20px;
+      border-radius: 50% 50% 55% 55%;
+      background: #ef4444;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.9);
+      animation: lightBlink 1.4s ease-in-out infinite alternate;
+    }
+
+    .light-bulb:nth-child(3n) {
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+      animation-delay: 0.3s;
+    }
+
+    .light-bulb:nth-child(3n + 1) {
+      background: #eab308;
+      box-shadow: 0 0 10px rgba(234, 179, 8, 0.9);
+      animation-delay: 0.6s;
+    }
+
+    @keyframes lightBlink {
+      0% {
+        opacity: 0.5;
+        transform: translateY(0);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(3px);
+      }
+    }
+
+    .snowman {
+      position: absolute;
+      bottom: 16px;
+      left: 6%;
+      font-size: 80px;
+      text-shadow: 0 0 12px rgba(148, 163, 184, 0.9);
+    }
+
+    .tree {
+      position: absolute;
+      bottom: 16px;
+      right: 6%;
+      font-size: 90px;
+      text-shadow: 0 0 14px rgba(34, 197, 94, 0.9);
+    }
+
+    .game-container {
+      width: 100%;
+      max-width: 720px;
+      background: transparent;
+      border-radius: 0;
+      padding: 24px 24px 18px;
+      box-shadow: none;
+      position: relative;
+      overflow: visible;
+      z-index: 1;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .game-container::before {
+      content: none;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.9rem;
+      letter-spacing: 0.03em;
+      color: #b91c1c;
+    }
+
+    .subtitle {
+      margin-bottom: 18px;
+      color: #4b5563;
+      font-size: 0.95rem;
+    }
+
+    .input-row {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      color: #111827;
+    }
+
+    .password-input-wrapper {
+      position: relative;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.8);
+      background: rgba(249, 250, 251, 0.95);
+      color: #111827;
+      font-size: 1rem;
+      outline: none;
+      transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background 0.15s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: #16a34a;
+      box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.7),
+        0 12px 25px rgba(15, 23, 42, 0.16);
+      background: #ffffff;
+    }
+
+    .status-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 14px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .status-main {
+      font-weight: 500;
+    }
+
+    .status-main span {
+      color: #b91c1c;
+    }
+
+    .status-main.completed span {
+      color: #16a34a;
+    }
+
+    .password-length {
+      opacity: 0.9;
+    }
+
+    .rules {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 16px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .rules::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .rules::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.7);
+      border-radius: 999px;
+    }
+
+    .rule {
+      position: relative;
+      padding: 8px 10px 8px 26px;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      border-radius: 10px;
+      background: #f9fafb;
+      border: 1px solid rgba(209, 213, 219, 0.9);
+      color: #111827;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .rule::before {
+      content: "●";
+      position: absolute;
+      left: 9px;
+      top: 11px;
+      font-size: 0.6rem;
+      opacity: 0.5;
+      color: #9ca3af;
+    }
+
+    .rule.valid {
+      border-color: rgba(22, 163, 74, 0.9);
+      background: linear-gradient(
+        90deg,
+        rgba(22, 163, 74, 0.12),
+        rgba(22, 163, 74, 0.02)
+      );
+      color: #14532d;
+    }
+
+    .rule.valid::before {
+      content: "✓";
+      color: #16a34a;
+      opacity: 1;
+      font-size: 0.9rem;
+      top: 8px;
+    }
+
+    .rule.invalid {
+      border-color: rgba(239, 68, 68, 0.7);
+      background: linear-gradient(
+        90deg,
+        rgba(248, 113, 113, 0.15),
+        rgba(248, 250, 252, 0.6)
+      );
+      color: #991b1b;
+    }
+
+    .rule.invalid::before {
+      content: "✕";
+      color: #dc2626;
+      opacity: 1;
+      font-size: 0.9rem;
+      top: 8px;
+    }
+
+    .rule.locked {
+      display: none;
+    }
+
+    .rule-text {
+      flex: 1 1 auto;
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .hint strong {
+      color: #111827;
+    }
+
+    .snowflake {
+      position: fixed;
+      top: -10px;
+      color: #e5e7eb;
+      font-size: 16px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.95;
+      animation-name: fall;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(-10vh);
+      }
+      100% {
+        transform: translateY(110vh);
+      }
+    }
+
+
+    .confetti-piece {
+      position: fixed;
+      top: -10px;
+      width: 7px;
+      height: 14px;
+      background: #ef4444;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50; 
+      border-radius: 2px;
+      animation-name: confetti-fall;
+      animation-timing-function: linear;
+      animation-fill-mode: forwards;
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        transform: translateY(-10vh) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(110vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    .christmas-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #020617, #000);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+      z-index: 20;
+    }
+
+    .christmas-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .envelope {
+      position: relative;
+      width: 420px;
+      height: 280px;
+      background: #d4b28c;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+      z-index: 30;
+      transition: opacity 0.5s ease;
+    }
+
+    .envelope-flap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 55%;
+      background: #c8a985;
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+      transform-origin: top;
+      transform: rotateX(0deg);
+      transition: transform 0.9s ease;
+      z-index: 40;
+    }
+
+    .card-slide {
+      position: absolute;
+      bottom: -100%;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 6px;
+      transition: bottom 1.1s ease;
+      z-index: 35;
+    }
+
+    .card-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .fullscreen-card {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      opacity: 0;
+      transition: opacity 0.9s ease;
+      z-index: 25;
+      pointer-events: none;
+    }
+
+    .fullscreen-card.visible {
+      opacity: 1;
+    }
+
+    .fullscreen-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-snowflake {
+      position: fixed;
+      top: -10%;
+      font-size: 20px;
+      color: #ffffff;
+      text-shadow: 0 0 8px rgba(0,0,0,1);
+      pointer-events: none;
+      z-index: 60;
+      animation: cardSnow 6s linear infinite;
+    }
+
+    @keyframes cardSnow {
+      0% {
+        opacity: 0.2;
+        transform: translateY(-10%) translateX(0);
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(120%) translateX(20px);
+      }
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.6rem;
+      }
+      .game-container {
+        padding: 18px 16px 12px;
+      }
+    }
+
+    .footer-row {
+      display: none;
+    }
+
+    .status-main {
+      display: none;
+    }
+
+    .rule[data-rule-id="team-member"] .team-list {
+      display: none;
+    }
+
+    #close-card {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(0,0,0,0.75);
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ornament-layer"></div>
+
+  <div class="scene">
+    <div class="lights-row">
+      <div class="light-bulb"></div><div class="light-bulb"></div><div class="light-bulb"></div>
+      <div class="light-bulb"></div><div class="light-bulb"></div><div class="light-bulb"></div>
+      <div class="light-bulb"></div><div class="light-bulb"></div><div class="light-bulb"></div>
+      <div class="light-bulb"></div><div class="light-bulb"></div><div class="light-bulb"></div>
+      <div class="light-bulb"></div><div class="light-bulb"></div><div class="light-bulb"></div>
+    </div>
+
+    <div class="snowman">⛄️</div>
+    <div class="tree">🎄</div>
+  </div>
+
+  <div class="game-container" id="game-container">
+    <h1>The Christmas Password Game</h1>
+    <p class="subtitle">
+      Write the password based on the rules below. You need to satisfy all the rules to unlock the card!
+    </p>
+
+    <div class="input-row">
+      <label for="password-input">Password</label>
+      <div class="password-input-wrapper">
+        <input id="password-input" type="text" autocomplete="off" />
+      </div>
+    </div>
+
+    <div class="status-line">
+      <div class="status-main" id="status-main">
+        Step <span id="step-number">1</span> of 5 — 0 / 1 rules satisfied
+      </div>
+      <div class="password-length" id="password-length">
+        Length: 0
+      </div>
+    </div>
+
+    <ul class="rules" id="rules-list">
+
+      <li class="rule invalid" data-rule-id="team-member" data-step="1">
+        <span class="rule-text">
+          The password contains the first name of one of your team members.
+        </span>
+      </li>
+
+      <li class="rule invalid locked" data-rule-id="tfeu-102" data-step="2">
+        <span class="rule-text">
+          The password includes the TFEU article number on abuse of dominance.
+        </span>
+      </li>
+
+      <li class="rule invalid locked" data-rule-id="digit-sum-25" data-step="3">
+        <span class="rule-text">
+          The sum of digits in the password need to be equal to 25.
+        </span>
+      </li>
+
+      <li class="rule invalid locked" data-rule-id="eu-member" data-step="4">
+        <span class="rule-text">
+          The password includes the name of an EU Member State.
+        </span>
+      </li>
+
+      <li class="rule invalid locked" data-rule-id="xmas-colour" data-step="5">
+        <span class="rule-text">
+          The password contains the name of one Christmas colour.
+        </span>
+      </li>
+    </ul>
+
+    <div class="footer-row">
+      <div class="hint">
+        Hint: First make it long, then think of your <strong>team</strong>,
+        use <strong>numbers</strong>, a <strong>special character</strong>,
+        and finish with a bit of <strong>noel</strong>. 🎄
+      </div>
+    </div>
+  </div>
+
+  <div class="christmas-overlay" id="christmas-overlay">
+    <div class="envelope" id="envelope">
+      <div class="envelope-flap" id="envelope-flap"></div>
+      <div class="card-slide" id="card-slide">
+        <img src="jerome-phillipe.jpg" alt="Christmas card" />
+      </div>
+    </div>
+
+    <div class="fullscreen-card" id="fullscreen-card">
+      <img src="jerome-phillipe.jpg" alt="Christmas card fullscreen" />
+    </div>
+
+    <button id="close-card">Close</button>
+  </div>
+
+  <audio id="xmas-audio" src="christmas-jingle.mp3" preload="auto"></audio>
+
+  <script>
+    (function () {
+      const passwordInput = document.getElementById("password-input");
+      const statusMain = document.getElementById("status-main");
+      const stepNumberSpan = document.getElementById("step-number");
+      const lengthDisplay = document.getElementById("password-length");
+      const overlay = document.getElementById("christmas-overlay");
+      const envelope = document.getElementById("envelope");
+      const envelopeFlap = document.getElementById("envelope-flap");
+      const cardSlide = document.getElementById("card-slide");
+      const fullscreenCard = document.getElementById("fullscreen-card");
+      const audio = document.getElementById("xmas-audio");
+      const ruleElements = Array.from(document.querySelectorAll(".rule[data-rule-id]"));
+
+      let hasCompleted = false;
+
+      function createSnowflakes(count) {
+        for (let i = 0; i < count; i++) {
+          const snow = document.createElement("div");
+          snow.className = "snowflake";
+          snow.textContent = Math.random() > 0.5 ? "❄" : "✼";
+          const size = 12 + Math.random() * 10;
+          snow.style.fontSize = size + "px";
+          snow.style.left = Math.random() * 100 + "vw";
+          const duration = 10 + Math.random() * 15;
+          const delay = Math.random() * -duration;
+          snow.style.animationDuration = duration + "s";
+          snow.style.animationDelay = delay + "s";
+          document.body.appendChild(snow);
+        }
+      }
+
+      createSnowflakes(45);
+
+      function launchConfetti() {
+        const pieces = 90;
+        const colors = ["#ef4444", "#22c55e", "#eab308", "#3b82f6", "#ec4899"];
+        for (let i = 0; i < pieces; i++) {
+          const piece = document.createElement("div");
+          piece.className = "confetti-piece";
+          const left = Math.random() * 100;
+          const duration = 3 + Math.random() * 2;
+          const delay = Math.random() * 0.5;
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          piece.style.left = left + "vw";
+          piece.style.background = color;
+          piece.style.animationDuration = duration + "s";
+          piece.style.animationDelay = delay + "s";
+          document.body.appendChild(piece);
+
+          setTimeout(() => {
+            piece.remove();
+          }, (duration + delay) * 1000);
+        }
+      }
+
+      function createCardSnowflakes(count) {
+        for (let i = 0; i < count; i++) {
+          const flake = document.createElement("div");
+          flake.className = "card-snowflake";
+          flake.textContent = Math.random() > 0.5 ? "❄" : "✼";
+          flake.style.left = Math.random() * 100 + "vw";
+          flake.style.animationDelay = Math.random() * 5 + "s";
+          document.body.appendChild(flake);
+          setTimeout(() => flake.remove(), 7000);
+        }
+      }
+
+      const teamNames = [
+        "paul", "sara", "charlotte", "anais", "thomas", "laena",
+        "audrey", "ananya", "leo", "jean", "alice", "narimane", "basile", 
+        "laure", "faustine", "petya", "ugo", "elaine", "anne", "geraldine",
+        "basile", "jerome", "sofia", "camille", "nina", "laurence", "fanny", 
+        "laéna", "géraldine", "anaïs", "jérôme"
+      ];
+
+      const euMemberStates = [
+        "austria", "belgium", "bulgaria", "croatia", "cyprus", "czech republic",
+        "denmark", "estonia", "finland", "france", "germany", "greece",
+        "hungary", "ireland", "italy", "latvia", "lithuania", "luxembourg",
+        "malta", "netherlands", "poland", "portugal", "romania", "slovakia",
+        "slovenia", "spain", "sweden"
+      ];
+
+      const christmasColors = [
+        "red", "green", "gold", "silver", "blue", "orange",
+        "white", "black", "yellow", "purple", "pink", "brown"
+      ];
+
+      const ruleChecks = {
+        "team-member": function (pwd) {
+          const lower = pwd.toLowerCase();
+          return teamNames.some(name => lower.includes(name));
+        },
+        "tfeu-102": function (pwd) {
+          return /102/.test(pwd);
+        },
+        "digit-sum-25": function (pwd) {
+          const digits = pwd.match(/\d/g);
+          if (!digits || digits.length < 3) return false;
+          const sum = digits.reduce((acc, d) => acc + parseInt(d, 10), 0);
+          return sum === 25;
+        },
+        "eu-member": function (pwd) {
+          const lower = pwd.toLowerCase();
+          return euMemberStates.some(country => lower.includes(country));
+        },
+        "xmas-colour": function (pwd) {
+          const lower = pwd.toLowerCase();
+          return christmasColors.some(color => lower.includes(color));
+        },
+      };
+
+      function getUnlockedRules() {
+        return ruleElements.filter(li => !li.classList.contains("locked"));
+      }
+
+      function getNextLockedRule() {
+        return ruleElements.find(li => li.classList.contains("locked"));
+      }
+
+      function showFinalCard() {
+        if (hasCompleted) return;
+        hasCompleted = true;
+
+        document.body.classList.add("finished");
+        overlay.classList.add("visible");
+
+        passwordInput.disabled = true;
+
+        if (audio) {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        }
+
+        setTimeout(() => {
+          if (envelopeFlap) {
+            envelopeFlap.style.transform = "rotateX(-160deg)";
+          }
+        }, 400);
+
+        setTimeout(() => {
+          if (cardSlide) {
+            cardSlide.style.bottom = "0";
+          }
+        }, 1400);
+
+        setTimeout(() => {
+          if (envelope) {
+            envelope.style.opacity = "0";
+          }
+        }, 2600);
+
+        setTimeout(() => {
+          if (fullscreenCard) {
+            fullscreenCard.classList.add("visible");
+          }
+        }, 2900);
+
+        launchConfetti();
+        createCardSnowflakes(40);
+      }
+
+      function evaluatePassword() {
+        const pwd = passwordInput.value || "";
+        const unlockedRules = getUnlockedRules();
+
+        lengthDisplay.textContent = "Length: " + pwd.length;
+
+        let passedCount = 0;
+
+        unlockedRules.forEach(li => {
+          const id = li.getAttribute("data-rule-id");
+          const checkFn = ruleChecks[id];
+          if (!checkFn) return;
+          const passed = checkFn(pwd);
+          li.classList.toggle("valid", passed);
+          li.classList.toggle("invalid", !passed);
+          if (passed) passedCount++;
+        });
+
+        const totalUnlocked = unlockedRules.length;
+        const maxSteps = ruleElements.length;
+        stepNumberSpan.textContent = totalUnlocked;
+        statusMain.querySelector("span").textContent =
+          totalUnlocked + " of " + maxSteps + " — " +
+          passedCount + " / " + totalUnlocked + " rules satisfied";
+        statusMain.classList.toggle("completed", passedCount === totalUnlocked);
+
+        const allUnlockedPassed =
+          totalUnlocked > 0 && passedCount === totalUnlocked;
+
+        if (allUnlockedPassed && !hasCompleted) {
+          const nextLocked = getNextLockedRule();
+          if (nextLocked) {
+            nextLocked.classList.remove("locked");
+          } else {
+            showFinalCard();
+          }
+        }
+      }
+
+      passwordInput.addEventListener("input", evaluatePassword);
+      evaluatePassword();
+
+      const closeBtn = document.getElementById("close-card");
+      if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+          overlay.classList.remove("visible");
+          fullscreenCard.classList.remove("visible");
+          if (audio) {
+            audio.pause();
+            audio.currentTime = 0;
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
